@@ -1,6 +1,6 @@
 ---
 - name: Phase 1 - Deploy Active Directory Domain Controller
-  hosts: adserver
+  hosts: ADserver
   gather_facts: false
   vars_files:
     - vars/ad.yml
