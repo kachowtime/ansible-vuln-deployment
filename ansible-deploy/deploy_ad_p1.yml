@@ -1,0 +1,30 @@
+# Phase 1
+# This playbook turns a fresh Windows Server into a Domain Controller
+# It must run using the local Administrator before the domain exists
+
+- name: Phase 1 Promote Domain Controller
+  hosts: ADserver
+  gather_facts: false
+  vars_files:
+    - vars/ad.yml              # Domain name and structure
+    - vars/local_admin.yml     # Local admin credentials
+
+  tasks:
+
+    # Install the AD DS role and management tools
+    - name: Install AD Domain Services
+      ansible.windows.win_feature:
+        name: AD-Domain-Services
+        state: present
+        include_management_tools: true
+
+    # Create a new forest and domain
+    - name: Create cyberpunk domain
+      ansible.windows.win_domain:
+        dns_domain_name: "{{ domain_name }}"
+        safe_mode_password: "{{ dsrm_password }}"
+
+    # Required reboot after promotion
+    - name: Reboot after domain promotion
+      ansible.windows.win_reboot:
+        reboot_timeout: 900
