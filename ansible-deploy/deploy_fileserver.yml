@@ -1,0 +1,69 @@
+- name: Deploy Cyberpunk File Server
+  hosts: fileserver
+  gather_facts: false
+  vars_files:
+    - vars/fileserver.yml
+
+  tasks:
+    # 1. Join Domain
+    - name: Join file server to domain
+      win_domain_membership:
+        dns_domain_name: "{{ domain_name }}"
+        domain_admin_user: "{{ domain_admin_user }}"
+        domain_admin_password: "{{ domain_admin_password }}"
+        state: domain
+      register: domain_join
+
+    # 2. Reboot if needed
+    - name: Reboot file server
+      win_reboot:
+        reboot_timeout: 600
+      when: domain_join.reboot_required
+
+    # 3. Open Firewall (Critical for mapping)
+    - name: Allow SMB traffic through firewall
+      win_firewall_rule:
+        name: SMB-In
+        localport: 445
+        action: allow
+        direction: in
+        protocol: tcp
+        state: present
+        enabled: yes
+
+    # 4. Create Folders
+    - name: Create file share directories
+      win_file:
+        path: "{{ item.path }}"
+        state: directory
+      loop: "{{ file_shares }}"
+
+    # 5. Set NTFS Permissions (The "Mappable" logic)
+    - name: Set NTFS ACLs for corporate access
+      win_acl:
+        path: "{{ item.path }}"
+        user: "{{ item.read_access }}"
+        rights: ReadAndExecute
+        type: allow
+        state: present
+      loop: "{{ file_shares }}"
+
+    # 6. Create SMB Shares
+    - name: Create SMB shares
+      win_share:
+        name: "{{ item.name }}"
+        path: "{{ item.path }}"
+        description: "{{ item.description }}"
+        full: "{{ item.full_access }}"
+        read: "{{ item.read_access }}"
+      loop: "{{ file_shares }}"
+
+    # 7. Add Baseline File
+    - name: Add baseline files
+      win_copy:
+        dest: "{{ item.path }}\\readme.txt"
+        content: |
+          CYBERPUNK FILE SERVER
+          Authorized use only.
+          Property of Night City.
+      loop: "{{ file_shares }}"

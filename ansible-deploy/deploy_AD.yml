@@ -1,0 +1,61 @@
+---
+- name: Phase 1 - Deploy Active Directory Domain Controller
+  hosts: adserver
+  gather_facts: false
+  vars_files:
+    - vars/ad.yml
+
+  tasks:
+    - name: Install Active Directory Domain Services
+      win_feature:
+        name: AD-Domain-Services
+        state: present
+
+    - name: Create Cyberpunk Domain
+      win_domain:
+        dns_domain_name: "{{ domain_name }}"
+        safe_mode_password: "{{ safe_mode_password }}"
+      register: ad_promotion
+
+    - name: Reboot after Promotion
+      win_reboot:
+      when: ad_promotion.reboot_required
+
+    - name: Create Organizational Groups
+      win_domain_group:
+        name: "{{ item.name }}"
+        description: "{{ item.desc }}"
+        scope: global
+      loop: "{{ ad_groups }}"
+
+    - name: Create Users and Link Logon Script
+      win_domain_user:
+        name: "{{ item.name }}"
+        password: "{{ item.password }}"
+        description: "{{ item.description }}"
+        groups: "{{ item.group }}"
+        state: present
+        script_path: "NeonLogon.ps1"
+      loop: "{{ ad_users }}"
+
+    - name: Create Dynamic Logon Script in SYSVOL
+      win_copy:
+        dest: "C:\\Windows\\SYSVOL\\sysvol\\{{ domain_name }}\\scripts\\NeonLogon.ps1"
+        content: |
+          $Groups = (Get-ADPrincipalGroupMembership $env:USERNAME).Name
+          $DriveMap = @{
+              "Neon-IT"      = @{ Letter = "I"; Path = "\\fileserver\IT" }
+              "Neon-HR"      = @{ Letter = "H"; Path = "\\fileserver\HR" }
+              "Neon-Finance" = @{ Letter = "F"; Path = "\\fileserver\Finance" }
+              "Neon-Ops"     = @{ Letter = "O"; Path = "\\fileserver\Ops" }
+              "Neon-Exec"    = @{ Letter = "X"; Path = "\\fileserver\Exec" }
+          }
+          foreach ($G in $DriveMap.Keys) {
+              if ($Groups -contains $G -or $Groups -contains "Neon-IT") {
+                  $L = $DriveMap[$G].Letter
+                  $P = $DriveMap[$G].Path
+                  if (!(Get-PSDrive -Name $L -ErrorAction SilentlyContinue)) {
+                      New-PSDrive -Name $L -PSProvider FileSystem -Root $P -Persist -ErrorAction SilentlyContinue
+                  }
+              }
+          }

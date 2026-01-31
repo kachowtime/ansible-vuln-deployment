@@ -1,0 +1,6 @@
+local_admin_user: cyberpunk-admin
+local_admin_password: Str0ngCyberPunk!2026
+
+default_image_user: deploy
+
+windows_timezone: Eastern Standard Time

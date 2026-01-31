@@ -1,0 +1,42 @@
+---
+# Domain Connectivity (Matching your AD vars)
+domain_name: "cyberpunk.local"
+domain_admin_user: "Administrator" 
+domain_admin_password: "Neon123!" 
+
+# Corporate Share Definitions with unique letters
+file_shares:
+  - name: "NetTech_Repo"
+    path: "C:\\Shares\\IT"
+    drive_letter: "I"
+    description: "IT Department Tools & Scripts"
+    full_access: "Neon-IT"
+    read_access: "Neon-IT"
+
+  - name: "Corporate_Vault"
+    path: "C:\\Shares\\Finance"
+    drive_letter: "F"
+    description: "Finance and Accounting Records"
+    full_access: "Neon-Finance"
+    read_access: "Neon-Finance"
+
+  - name: "NightCity_Ops"
+    path: "C:\\Shares\\Operations"
+    drive_letter: "O"
+    description: "Field Operations and Logistics"
+    full_access: "Neon-Ops"
+    read_access: "Neon-Ops"
+
+  - name: "HR_Sensitive"
+    path: "C:\\Shares\\HR"
+    drive_letter: "H"
+    description: "Employee Relations and Payroll"
+    full_access: "Neon-HR"
+    read_access: "Neon-HR"
+
+  - name: "Exec_Strategy"
+    path: "C:\\Shares\\Exec"
+    drive_letter: "X"
+    description: "Executive Board High-Level Strategy"
+    full_access: "Neon-Exec"
+    read_access: "Neon-Exec"
