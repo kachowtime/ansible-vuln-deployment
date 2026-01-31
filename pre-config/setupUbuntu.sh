@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 #!/bin/bash
 
 # Exit on error
@@ -58,4 +57,3 @@ git --version
 echo "==============================="
 echo "Setup complete! Ansible + Git + pywinrm ready."
 echo "==============================="
->>>>>>> 7bf2c8c5490be32881777aed50681cbb1ef7df7e
