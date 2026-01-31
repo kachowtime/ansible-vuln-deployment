@@ -1,0 +1,19 @@
+Purpose
+
+This directory is used to preconfigure machines deployed from OpenStack so they can communicate properly.
+
+Windows:
+Configures Windows so it can be managed remotely by Ansible.
+
+setupWindows -> Turns off windows firewall; ensure winrm is operational: 
+  1. Windows blocks ping by default for security -> turn off firewalls
+  2. Enable winRM to run ansible script -> alternative to SSH 
+
+Ububntu: 
+Used as a jump box to reach and manage the connected Windows machine.
+
+setupUbuntu.sh -> Prepares a Linux machine to:
+  1. Update package list
+  2. Run Ansible
+  3. Manage Windows hosts using WinRM
+  4. Use Git for playbooks
