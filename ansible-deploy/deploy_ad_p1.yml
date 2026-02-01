@@ -1,83 +1,56 @@
-# Purpose:
-# This playbook promotes a Windows Server to an Active Directory
-# Domain Controller for the Cyberpunk lab environment.
-
 ---
+# Purpose:
+# Phase 1 – Promote Windows Server to Active Directory Domain Controller
+# Cyberpunk lab environment
+
 - name: Phase 1 - Promote Domain Controller
   hosts: ADserver
   gather_facts: false
+
   vars_files:
     - vars/ad/ad.yml
-    - vars/ad/local_admin.yml
-    - vars/ad/domain_admin.yml 
+    - vars/ad/domain_admin.yml
 
   tasks:
-    - name: Install AD Domain Services feature
+    - name: Install AD Domain Services
       ansible.windows.win_feature:
         name: AD-Domain-Services
         state: present
         include_management_tools: true
-      register: ad_install
 
     - name: Check if domain already exists
       ansible.windows.win_shell: |
         try {
-            Get-ADDomain -ErrorAction Stop
-            Write-Output "EXISTS"
+          Get-ADDomain -ErrorAction Stop | Out-Null
+          Write-Output "EXISTS"
         } catch {
-            Write-Output "NOT_EXISTS"
+          Write-Output "NOT_EXISTS"
         }
       register: domain_check
       failed_when: false
       changed_when: false
 
-  - name: Promote server to Domain Controller
-  win_domain:
-    dns_domain_name: "{{ domain_name }}"
-    domain_admin_user: "{{ domain_admin_user }}"
-    domain_admin_password: "{{ domain_admin_password }}"
-    safe_mode_password: "{{ dsrm_password }}"
-    state: domain
-  when: domain_check.stdout is search("NOT_EXISTS")
-
-
-
-    - name: Wait for domain promotion to complete
-      ansible.builtin.pause:
-        seconds: 120
+    - name: Promote server to Domain Controller
+      ansible.windows.win_domain:
+        dns_domain_name: "{{ domain_name }}"
+        domain_admin_user: "{{ domain_admin_user }}"
+        domain_admin_password: "{{ domain_admin_password }}"
+        safe_mode_password: "{{ dsrm_password }}"
+        state: domain
       when: domain_check.stdout is search("NOT_EXISTS")
 
-    - name: Wait for server to come back online
+    - name: Wait for server reboot after promotion
       wait_for_connection:
         timeout: 900
         delay: 60
       when: domain_check.stdout is search("NOT_EXISTS")
 
-    - name: Wait for AD Web Services to be ready
+    - name: Verify Domain Controller promotion
       ansible.windows.win_shell: |
-        $timeout = 300
-        $timer = [Diagnostics.Stopwatch]::StartNew()
-        while ($timer.Elapsed.TotalSeconds -lt $timeout) {
-            try {
-                Get-ADDomain -ErrorAction Stop | Out-Null
-                Write-Output "READY"
-                exit 0
-            } catch {
-                Start-Sleep -Seconds 10
-            }
-        }
-        Write-Output "TIMEOUT"
-        exit 1
-      register: ad_ready
-      retries: 3
-      delay: 30
-      until: ad_ready.stdout is search("READY")
-
-    - name: Verify domain controller promotion
-      ansible.windows.win_shell: |
-        Get-ADDomainController -Identity $env:COMPUTERNAME | Select-Object Name, Domain
+        Get-ADDomainController -Identity $env:COMPUTERNAME |
+        Select-Object Name, Domain
       register: dc_status
 
-    - name: Display domain controller status
+    - name: Display Domain Controller status
       ansible.builtin.debug:
         var: dc_status.stdout_lines
