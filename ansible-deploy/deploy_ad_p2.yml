@@ -8,7 +8,7 @@
   gather_facts: false
   vars_files:
     - vars/ad/ad.yml                # OUs and groups
-    - vars/ad/domain_admin.yml      # FIXED: folder name was 'aid'
+    - vars/ad/domain_admin.yml     
 
   tasks:
 
