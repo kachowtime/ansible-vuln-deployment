@@ -2,7 +2,10 @@
 domain_name: "cyberpunk.local"
 domain_dn: "DC=cyberpunk,DC=local"
 netbios_name: "CYBERPUNK"
-safe_mode_password: "CyberpunkDSRM123!"
+
+# Directory Services Restore Mode (DSRM) password
+dsrm_password: "CyberpunkDSRM123!"
+
 
 # Organizational Units (OUs)
 ous:
