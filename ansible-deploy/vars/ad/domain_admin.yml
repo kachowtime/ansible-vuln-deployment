@@ -1,4 +1,4 @@
-ansible_user: CYBERPUNK\Administrator
+ansible_user: CYBERPUNK\\Administrator
 ansible_password: Passw0rd!
 ansible_connection: winrm
 ansible_winrm_transport: ntlm
