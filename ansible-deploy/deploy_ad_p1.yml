@@ -1,30 +1,53 @@
-# Phase 1
+---
+# Phase 1: Promote Domain Controller
 # This playbook turns a fresh Windows Server into a Domain Controller
-# It must run using the local Administrator before the domain exists
+# Run with: ansible-playbook -i inventory.ini deploy_ad_p1.yml
 
-- name: Phase 1 Promote Domain Controller
+- name: Phase 1 - Promote Domain Controller
   hosts: ADserver
   gather_facts: false
   vars_files:
-    - vars/ad/ad.yml              # Domain name and structure
-    - vars/ad/local_admin.yml     # Local admin credentials
+    - vars/ad/ad.yml
+    - vars/ad/local_admin.yml
 
   tasks:
-
-    # Install the AD DS role and management tools
-    - name: Install AD Domain Services
+    - name: Install AD Domain Services feature
       ansible.windows.win_feature:
         name: AD-Domain-Services
         state: present
         include_management_tools: true
+      register: ad_install
 
-    # Create a new forest and domain
-    - name: Create cyberpunk domain
+    - name: Display AD DS installation status
+      ansible.builtin.debug:
+        msg: "AD DS installed: {{ ad_install.changed }}"
+
+    - name: Promote server to Domain Controller
       ansible.windows.win_domain:
         dns_domain_name: "{{ domain_name }}"
         safe_mode_password: "{{ dsrm_password }}"
+        create_dns_delegation: false
+        database_path: "C:\\Windows\\NTDS"
+        sysvol_path: "C:\\Windows\\SYSVOL"
+      register: domain_promotion
 
-    # Required reboot after promotion
     - name: Reboot after domain promotion
       ansible.windows.win_reboot:
         reboot_timeout: 900
+        post_reboot_delay: 120
+      when: domain_promotion.reboot_required
+
+    - name: Wait for domain controller to be ready
+      ansible.windows.win_wait_for_connection:
+        timeout: 600
+        delay: 30
+
+    - name: Verify domain controller promotion
+      ansible.windows.win_shell: |
+        Get-ADDomainController -Identity $env:COMPUTERNAME | Select-Object Name, Domain, IsGlobalCatalog
+      register: dc_status
+      failed_when: false
+
+    - name: Display domain controller status
+      ansible.builtin.debug:
+        var: dc_status.stdout_lines

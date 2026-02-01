@@ -1,0 +1,38 @@
+# Phase 2
+# This playbook configures Active Directory objects
+# It must run AFTER the domain controller reboot completes
+# Uses domain credentials instead of local admin
+
+- name: Phase 2 Configure Active Directory
+  hosts: ADserver
+  gather_facts: false
+  vars_files:
+    - vars/ad/ad.yml                # OUs and groups
+    - vars/ad/domain_admin.yml     
+
+  tasks:
+
+    # CRITICAL: Ensures WinRM is ready after reboot.
+    # UNCOMMENTED this so it waits for the "No Network" state to clear.
+    - name: Wait for domain controller
+      wait_for_connection:
+        timeout: 600
+
+    # Create Organizational Units for departments
+    - name: Create Organizational Units
+      community.windows.win_domain_ou:
+        name: "{{ item.name }}"
+        path: "{{ domain_dn }}"
+        state: present
+      loop: "{{ ous }}"
+
+    # Create security groups inside the domain
+    - name: Create security groups
+      community.windows.win_domain_group:
+        name: "{{ item.name }}"
+        scope: global
+        category: security
+        path: "{{ domain_dn }}"
+        description: "{{ item.desc }}"
+        state: present
+      loop: "{{ groups }}"

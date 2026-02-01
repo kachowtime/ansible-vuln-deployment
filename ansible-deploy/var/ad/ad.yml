@@ -1,0 +1,31 @@
+# Domain Configuration
+domain_name: "cyberpunk.local"
+domain_dn: "DC=cyberpunk,DC=local"
+netbios_name: "CYBERPUNK"
+dsrm_password: "CyberpunkDSRM123!"
+
+# Organizational Units (OUs)
+ous:
+  - { name: "Departments" }
+  - { name: "Users" }
+
+# AD Security Groups
+groups:
+  - { name: "Neon-IT", desc: "IT Department", ou: "Departments" }
+  - { name: "Neon-HR", desc: "HR Department", ou: "Departments" }
+  - { name: "Neon-Finance", desc: "Finance Department", ou: "Departments" }
+  - { name: "Neon-Ops", desc: "Operations Department", ou: "Departments" }
+  - { name: "Neon-Exec", desc: "Executives", ou: "Departments" }
+
+# AD Users
+ad_users:
+  - { name: "v", password: "Neon123!", description: "Street Runner", group: "Neon-Ops" }
+  - { name: "judy", password: "Neon123!", description: "NetTech", group: "Neon-IT" }
+  - { name: "panam", password: "Neon123!", description: "Logistics", group: "Neon-Ops" }
+  - { name: "dex", password: "Neon123!", description: "Finance Analyst", group: "Neon-Finance" }
+  - { name: "rogue", password: "Neon123!", description: "Strategy Lead", group: "Neon-Exec" }
+  - { name: "morgan", password: "Neon123!", description: "HR Relations", group: "Neon-HR" }
+  - { name: "jackie", password: "Neon123!", description: "Junior Admin", group: "Neon-IT" }
+  - { name: "river", password: "Neon123!", description: "Field Specialist", group: "Neon-Ops" }
+  - { name: "kira", password: "Neon123!", description: "Accountant", group: "Neon-Finance" }
+  - { name: "nova", password: "Neon123!", description: "Payroll Specialist", group: "Neon-HR" }

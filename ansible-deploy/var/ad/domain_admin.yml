@@ -1,0 +1,8 @@
+# Domain Administrator Credentials
+# Used AFTER domain promotion and reboot
+ansible_user: "CYBERPUNK\\cyberrange"
+ansible_password: "Passw0rd!"
+ansible_connection: winrm
+ansible_winrm_transport: ntlm
+ansible_winrm_server_cert_validation: ignore
+ansible_shell_type: powershell
