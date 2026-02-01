@@ -1,4 +1,4 @@
-ansible_user: Administrator
+ansible_user: cyberrange
 ansible_password: Cyberrange123!
 ansible_connection: winrm
 ansible_winrm_transport: ntlm
