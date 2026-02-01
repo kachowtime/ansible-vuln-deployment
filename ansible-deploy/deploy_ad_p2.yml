@@ -8,14 +8,14 @@
   gather_facts: false
   vars_files:
     - vars/ad/ad.yml               # OUs and groups
-    - vars/ad/domain_admin.yml     # Domain admin credentials
+    - vars/aid/domain_admin.yml     # Domain admin credentials
 
   tasks:
 
     # Ensures WinRM is ready after reboot
-    - name: Wait for domain controller
-      wait_for_connection:
-        timeout: 300
+    # - name: Wait for domain controller
+    #  wait_for_connection:
+     #   timeout: 300
 
     # Create Organizational Units for departments
     - name: Create Organizational Units
