@@ -1,8 +1,23 @@
----
+# Domain Info
 domain_name: "cyberpunk.local"
 netbios_name: "CYBERPUNK"
 safe_mode_password: "CyberpunkDSRM123!"
 
+# Admin Credentials
+local_admin_user: "Administrator"
+local_admin_password: "Passw0rd!"
+domain_admin_user: "Administrator"
+domain_admin_password: "Passw0rd!"
+
+# AD Groups
+ad_groups:
+  - { name: "Neon-IT", desc: "IT Dept" }
+  - { name: "Neon-HR", desc: "HR Dept" }
+  - { name: "Neon-Finance", desc: "Finance Dept" }
+  - { name: "Neon-Ops", desc: "Operations Dept" }
+  - { name: "Neon-Exec", desc: "Executives" }
+
+# AD Users
 ad_users:
   - { name: "v", password: "Neon123!", description: "Street Runner", group: "Neon-Ops" }
   - { name: "judy", password: "Neon123!", description: "NetTech", group: "Neon-IT" }
@@ -14,10 +29,3 @@ ad_users:
   - { name: "river", password: "Neon123!", description: "Field Specialist", group: "Neon-Ops" }
   - { name: "kira", password: "Neon123!", description: "Accountant", group: "Neon-Finance" }
   - { name: "nova", password: "Neon123!", description: "Payroll Specialist", group: "Neon-HR" }
-
-ad_groups:
-  - { name: "Neon-IT", desc: "IT Dept" }
-  - { name: "Neon-HR", desc: "HR Dept" }
-  - { name: "Neon-Finance", desc: "Finance Dept" }
-  - { name: "Neon-Ops", desc: "Operations Dept" }
-  - { name: "Neon-Exec", desc: "Executives" }
