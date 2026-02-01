@@ -5,6 +5,7 @@
   vars_files:
     - vars/ad/ad.yml
     - vars/ad/local_admin.yml
+    - vars/ad/domain_admin.yml 
 
   tasks:
     - name: Install AD Domain Services feature
@@ -27,23 +28,13 @@
       changed_when: false
 
     - name: Promote server to Domain Controller
-      ansible.windows.win_shell: |
-        $SecurePassword = ConvertTo-SecureString "{{ dsrm_password }}" -AsPlainText -Force
-        Install-ADDSForest `
-          -DomainName "{{ domain_name }}" `
-          -DomainNetbiosName "{{ netbios_name }}" `
-          -SafeModeAdministratorPassword $SecurePassword `
-          -InstallDns:$true `
-          -CreateDnsDelegation:$false `
-          -DatabasePath "C:\Windows\NTDS" `
-          -SysvolPath "C:\Windows\SYSVOL" `
-          -LogPath "C:\Windows\NTDS" `
-          -NoRebootOnCompletion:$false `
-          -Force:$true
-      register: domain_promotion
-      when: domain_check.stdout is search("NOT_EXISTS")
-      async: 1800
-      poll: 0
+      win_domain:
+        dns_domain_name: "{{ domain_name }}"
+        domain_admin_user: "{{ domain_admin_user }}"
+        domain_admin_password: "{{ domain_admin_password }}"
+        safe_mode_password: "{{ dsrm_password }}"   
+        state: domain
+
 
     - name: Wait for domain promotion to complete
       ansible.builtin.pause:
