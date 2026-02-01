@@ -6,8 +6,8 @@
   hosts: ADserver
   gather_facts: false
   vars_files:
-    - vars/ad.yml              # Domain name and structure
-    - vars/local_admin.yml     # Local admin credentials
+    - vars/ad/ad.yml              # Domain name and structure
+    - vars/ad/local_admin.yml     # Local admin credentials
 
   tasks:
 

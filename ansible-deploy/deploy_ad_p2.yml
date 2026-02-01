@@ -7,8 +7,8 @@
   hosts: ADserver
   gather_facts: false
   vars_files:
-    - vars/ad.yml               # OUs and groups
-    - vars/domain_admin.yml     # Domain admin credentials
+    - vars/ad/ad.yml               # OUs and groups
+    - vars/ad/domain_admin.yml     # Domain admin credentials
 
   tasks:
 
