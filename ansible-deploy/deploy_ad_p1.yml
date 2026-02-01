@@ -8,8 +8,8 @@
   gather_facts: false
 
   vars_files:
-    - vars/ad/ad.yml
-    - vars/ad/domain_admin.yml
+    - var/ad/ad.yml
+    - var/ad/domain_admin.yml
 
   tasks:
     - name: Install AD Domain Services
