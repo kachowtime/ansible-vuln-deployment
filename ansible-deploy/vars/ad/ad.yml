@@ -5,9 +5,9 @@ netbios_name: "CYBERPUNK"
 dsrm_password: "CyberpunkDSRM123!"
 
 # Admin Credentials
-local_admin_user: "Administrator"
+local_admin_user: "cyberrange"
 local_admin_password: "Passw0rd!"
-domain_admin_user: "Administrator"
+domain_admin_user: "cyberrange"
 domain_admin_password: "Passw0rd!"
 
 # Organizational Units (OUs)
