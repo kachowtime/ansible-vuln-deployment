@@ -3,8 +3,8 @@
   hosts: ADserver
   gather_facts: false
   vars_files:
-    - vars/ad/ad.yml
-
+    - var/ad/ad.yml
+    - var/ad/domain_admin.yml
   tasks:
     - name: Wait for domain controller services
       wait_for_connection:
