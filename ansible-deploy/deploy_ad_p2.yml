@@ -15,7 +15,7 @@
     # Ensures WinRM is ready after reboot
     - name: Wait for domain controller
       wait_for_connection:
-        timeout: 600
+        timeout: 300
 
     # Create Organizational Units for departments
     - name: Create Organizational Units
