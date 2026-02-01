@@ -3,32 +3,105 @@
 # Phase 1 – Promote Windows Server to Active Directory Domain Controller
 # Cyberpunk lab environment
 
-- name: Phase 1 - Promote Domain Controller
-  hosts: ADserver
-  gather_facts: yes
-  vars:
-    # Overriding transport to credssp for this specific sensitive play
-    ansible_winrm_transport: credssp
-    domain_name: cyberpunk.local
-    safe_mode_password: "CyberrangeSafeMode123!"
+- name: Setup Active Directory Domain Controller
+  hosts: windows_dc  # Targets only the domain controller (first Windows VM)
+  gather_facts: false  # Defer until after WinRM is ready
 
-  tasks:
-    - name: Install AD-Domain-Services role
-      win_feature:
-        name: AD-Domain-Services
-        state: present
-        include_management_tools: yes
+  # Pre-flight checks
+  pre_tasks:
+    - name: Wait for WinRM to be ready (may take 10-15 minutes after VM creation)
+      ansible.builtin.wait_for_connection:
+        timeout: 900
+        delay: 30
+        sleep: 10
 
-    - name: Promote server to Domain Controller
-      microsoft.ad.domain:
-        dns_domain_name: "{{ domain_name }}"
-        safe_mode_password: "{{ safe_mode_password }}"
-        install_dns: yes
-        state: domain_controller
-      register: promotion_status
+    - name: Gather facts after connection is ready
+      ansible.builtin.setup:
 
-    - name: Reboot after promotion
-      win_reboot:
-        msg: "Rebooting to finalize Domain Controller promotion"
-        pre_reboot_delay: 15
-      when: promotion_status.reboot_required
+    - name: Load global variables
+      ansible.builtin.include_vars:
+        file: "../group_vars/all.yml"
+
+    - name: Load domain controller variables
+      ansible.builtin.include_vars:
+        file: "../group_vars/windows_dc.yml"
+
+    - name: Display target host information
+      ansible.builtin.debug:
+        msg: "Setting up Domain Controller on {{ inventory_hostname }} for domain {{ domain_name }}"
+
+    - name: Verify Windows version
+      ansible.windows.win_powershell:
+        script: |
+          # Check we're running on Windows Server
+          $os = Get-WmiObject -Class Win32_OperatingSystem
+          if ($os.Caption -notlike "*Server*") {
+            Write-Error "This playbook requires Windows Server"
+            $Ansible.Failed = $true
+          } else {
+            Write-Output "Running on: $($os.Caption)"
+            $Ansible.Changed = $false
+          }
+      register: os_check
+
+    - name: Set timezone to America/New_York
+      community.windows.win_timezone:
+        timezone: Eastern Standard Time
+      register: timezone_result
+
+    - name: Configure Windows Time service
+      ansible.windows.win_powershell:
+        script: |
+          # Configure Windows Time service
+          w32tm /config /manualpeerlist:"time.windows.com,0x8" /syncfromflags:manual /reliable:YES /update
+          net stop w32time
+          net start w32time
+          w32tm /resync /force
+
+          # Display current time
+          $currentTime = Get-Date
+          Write-Output "Current system time: $currentTime"
+      register: time_sync
+
+    - name: Reboot if timezone changed
+      ansible.windows.win_reboot:
+        reboot_timeout: 600
+        msg: "Rebooting to apply timezone changes"
+      when: timezone_result.changed
+
+  # Main tasks: Execute the domain_controller role
+  roles:
+    - role: domain_controller
+
+  # Post-deployment tasks
+  post_tasks:
+    - name: Display domain controller information
+      ansible.windows.win_powershell:
+        script: |
+          # Gather information about the newly created domain
+          $domain = Get-ADDomain
+          $dc = Get-ADDomainController
+
+          Write-Output "=========================================="
+          Write-Output "Domain Controller Setup Complete!"
+          Write-Output "=========================================="
+          Write-Output "Domain Name: $($domain.DNSRoot)"
+          Write-Output "NetBIOS Name: $($domain.NetBIOSName)"
+          Write-Output "Domain Functional Level: $($domain.DomainMode)"
+          Write-Output "Forest Functional Level: $($domain.ForestMode)"
+          Write-Output "DC Name: $($dc.Name)"
+          Write-Output "DC IP: $($dc.IPv4Address)"
+          Write-Output "=========================================="
+          Write-Output ""
+          Write-Output "Next steps:"
+          Write-Output "1. Run create-domain-users.yml to create domain accounts"
+          Write-Output "2. Run join-windows-domain.yml to add Windows members"
+          Write-Output "3. Run join-linux-domain.yml to add Linux members"
+          Write-Output "=========================================="
+
+          $Ansible.Changed = $false
+      register: domain_info
+
+    - name: Show domain information
+      ansible.builtin.debug:
+        msg: "{{ domain_info.output }}"
