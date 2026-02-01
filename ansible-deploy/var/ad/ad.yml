@@ -6,6 +6,10 @@ netbios_name: "CYBERPUNK"
 # Directory Services Restore Mode (DSRM) password
 dsrm_password: "CyberpunkDSRM123!"
 
+# Domain Admin Credentials
+domain_admin_user: "CYBERPUNK\\cyberrange"
+domain_admin_password: "Passw0rd!"
+
 
 # Organizational Units (OUs)
 ous:
