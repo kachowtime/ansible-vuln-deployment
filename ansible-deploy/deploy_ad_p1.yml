@@ -31,13 +31,15 @@
       failed_when: false
       changed_when: false
 
-    - name: Promote server to Domain Controller
-      win_domain:
-        dns_domain_name: "{{ domain_name }}"
-        domain_admin_user: "{{ domain_admin_user }}"
-        domain_admin_password: "{{ domain_admin_password }}"
-        safe_mode_password: "{{ dsrm_password }}"   
-        state: domain
+  - name: Promote server to Domain Controller
+  win_domain:
+    dns_domain_name: "{{ domain_name }}"
+    domain_admin_user: "{{ domain_admin_user }}"
+    domain_admin_password: "{{ domain_admin_password }}"
+    safe_mode_password: "{{ dsrm_password }}"
+    state: domain
+  when: domain_check.stdout is search("NOT_EXISTS")
+
 
 
     - name: Wait for domain promotion to complete
