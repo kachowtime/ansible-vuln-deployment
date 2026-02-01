@@ -1,7 +1,7 @@
 # Domain Info
 domain_name: "cyberpunk.local"
 netbios_name: "CYBERPUNK"
-safe_mode_password: "CyberpunkDSRM123!"
+dsrm_password: "CyberpunkDSRM123!"
 
 # Admin Credentials
 local_admin_user: "Administrator"
