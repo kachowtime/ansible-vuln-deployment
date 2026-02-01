@@ -2,6 +2,7 @@
 # Phase 1: Promote Domain Controller
 # This playbook turns a fresh Windows Server into a Domain Controller
 # Run with: ansible-playbook -i inventory.ini deploy_ad_p1.yml
+# Uses direct PowerShell commands for compatibility
 
 - name: Phase 1 - Promote Domain Controller
   hosts: ADserver
@@ -22,32 +23,85 @@
       ansible.builtin.debug:
         msg: "AD DS installed: {{ ad_install.changed }}"
 
+    - name: Check if domain already exists
+      ansible.windows.win_shell: |
+        try {
+            Get-ADDomain -ErrorAction Stop
+            Write-Output "EXISTS"
+        } catch {
+            Write-Output "NOT_EXISTS"
+        }
+      register: domain_check
+      failed_when: false
+      changed_when: false
+
     - name: Promote server to Domain Controller
-      ansible.windows.win_domain:
-        dns_domain_name: "{{ domain_name }}"
-        safe_mode_password: "{{ dsrm_password }}"
-        create_dns_delegation: false
-        database_path: "C:\\Windows\\NTDS"
-        sysvol_path: "C:\\Windows\\SYSVOL"
+      ansible.windows.win_shell: |
+        $SecurePassword = ConvertTo-SecureString "{{ dsrm_password }}" -AsPlainText -Force
+        Install-ADDSForest `
+          -DomainName "{{ domain_name }}" `
+          -DomainNetbiosName "{{ netbios_name }}" `
+          -SafeModeAdministratorPassword $SecurePassword `
+          -InstallDns:$true `
+          -CreateDnsDelegation:$false `
+          -DatabasePath "C:\Windows\NTDS" `
+          -SysvolPath "C:\Windows\SYSVOL" `
+          -LogPath "C:\Windows\NTDS" `
+          -NoRebootOnCompletion:$false `
+          -Force:$true
       register: domain_promotion
+      when: domain_check.stdout is search("NOT_EXISTS")
+      async: 1800
+      poll: 0
 
-    - name: Reboot after domain promotion
-      ansible.windows.win_reboot:
-        reboot_timeout: 900
-        post_reboot_delay: 120
-      when: domain_promotion.reboot_required
+    - name: Wait for domain promotion to complete (server will reboot)
+      ansible.builtin.pause:
+        seconds: 120
+      when: domain_check.stdout is search("NOT_EXISTS")
 
-    - name: Wait for domain controller to be ready
-      ansible.windows.win_wait_for_connection:
-        timeout: 600
-        delay: 30
+    - name: Wait for server to come back online
+      wait_for_connection:
+        timeout: 900
+        delay: 60
+      when: domain_check.stdout is search("NOT_EXISTS")
+
+    - name: Wait for AD Web Services to be ready
+      ansible.windows.win_shell: |
+        $timeout = 300
+        $timer = [Diagnostics.Stopwatch]::StartNew()
+        while ($timer.Elapsed.TotalSeconds -lt $timeout) {
+            try {
+                Get-ADDomain -ErrorAction Stop | Out-Null
+                Write-Output "READY"
+                exit 0
+            } catch {
+                Start-Sleep -Seconds 10
+            }
+        }
+        Write-Output "TIMEOUT"
+        exit 1
+      register: ad_ready
+      retries: 3
+      delay: 30
+      until: ad_ready.stdout is search("READY")
 
     - name: Verify domain controller promotion
       ansible.windows.win_shell: |
-        Get-ADDomainController -Identity $env:COMPUTERNAME | Select-Object Name, Domain, IsGlobalCatalog
+        Get-ADDomainController -Identity $env:COMPUTERNAME | Select-Object Name, Domain, IsGlobalCatalog, OperatingSystem
       register: dc_status
-      failed_when: false
 
     - name: Display domain controller status
       ansible.builtin.debug:
         var: dc_status.stdout_lines
+
+    - name: Display completion message
+      ansible.builtin.debug:
+        msg:
+          - "========================================="
+          - "Domain Controller Promotion Complete"
+          - "========================================="
+          - "Domain: {{ domain_name }}"
+          - "NetBIOS: {{ netbios_name }}"
+          - "Status: Domain controller is ready"
+          - "Next: Run Phase 2 to configure AD objects"
+          - "========================================="
