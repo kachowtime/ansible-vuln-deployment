@@ -7,15 +7,16 @@
   hosts: ADserver
   gather_facts: false
   vars_files:
-    - vars/ad/ad.yml               # OUs and groups
-    - vars/aid/domain_admin.yml     # Domain admin credentials
+    - vars/ad/ad.yml                # OUs and groups
+    - vars/ad/domain_admin.yml      # FIXED: folder name was 'aid'
 
   tasks:
 
-    # Ensures WinRM is ready after reboot
-    # - name: Wait for domain controller
-    #  wait_for_connection:
-     #   timeout: 300
+    # CRITICAL: Ensures WinRM is ready after reboot.
+    # UNCOMMENTED this so it waits for the "No Network" state to clear.
+    - name: Wait for domain controller
+      wait_for_connection:
+        timeout: 600
 
     # Create Organizational Units for departments
     - name: Create Organizational Units
