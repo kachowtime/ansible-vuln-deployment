@@ -1,3 +1,7 @@
+# Purpose:
+# This playbook promotes a Windows Server to an Active Directory
+# Domain Controller for the Cyberpunk lab environment.
+
 ---
 - name: Phase 1 - Promote Domain Controller
   hosts: ADserver
